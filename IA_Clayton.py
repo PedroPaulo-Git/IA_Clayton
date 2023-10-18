@@ -1,15 +1,34 @@
 import speech_recognition as sr
-import webbrowser
 import openai
+import psycopg2
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 
+#connection BD >>>
+conn = psycopg2.connect(
+dbname ='IA_ClaytonBD',
+user= 'postgres',
+password='123',
+host='localhost'
+)
+cursor = conn.cursor()
 
-openai.api_key = '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'
+cursor.execute("SELECT * FROM phrases_english")
+
+rows = cursor.fetchall()
+for row in rows:
+    print(row)
+    cursor.close()
+    conn.close()
+
+
+
+
+#openai.api_key = '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'
 url_default = 'https://www.youtube.com/results?search_query='
-xpath_ytb_search = '//*[@id="thumbnail"]/yt-image/img'
+xpath_ytb_search = '//*[@id="video-title"]/yt-formatted-string'
 listener = sr.Recognizer()
 try:
     with sr.Microphone() as source:
@@ -30,18 +49,50 @@ try:
         if 'alexa' in command:
             print(command) 
            
+
+
+
+
+
+
+
+
+
+
+
+
             if 'play' in command:
                 search_query = command.replace('alexa play','')
                 search_query = search_query.replace('','+')
                 url = url_default+search_query  
 
-                print('abrindo o navegador...') 
+                print('opening Chrome...') 
                 driver = webdriver.Chrome(service=chrome_service,options=options)
                 driver.get(url)
                 time.sleep(2)
             
                 video_get_video = driver.find_element(By.XPATH,xpath_ytb_search)
-                video_get_video.click()
+                while True:
+                    try:
+                        content_element = driver.find_element(By.XPATH,'//*[@id="dismissible"]')
+                        title = content_element.text
+                        video_get_video.click()
+                        print('video found')
+                        
+                        time.sleep(15)
+
+                        ad = driver.find_element(By.XPATH,'//*[@id="ad-text:1a"]') 
+                        if ad:
+                            ad.click()
+                            print('ad skipped')
+                        else:
+                            print('ad dont found')
+                        break
+                    except Exception as e:
+                     print(f'error in > {e}')
+                     #//*[@id="ad-text:1a"]
+                    break
+               
                 chromeopen = False
                 while True:
                     try:
