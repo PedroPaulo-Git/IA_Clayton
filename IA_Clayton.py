@@ -1,5 +1,7 @@
+import re
 import speech_recognition as sr
 import openai
+import nltk
 import psycopg2
 import time
 from selenium import webdriver
@@ -20,8 +22,8 @@ cursor.execute("SELECT * FROM phrases_english")
 rows = cursor.fetchall()
 for row in rows:
     print(row)
-    cursor.close()
-    conn.close()
+    #cursor.close()
+    #conn.close()
 
 
 
@@ -49,9 +51,30 @@ try:
         if 'alexa' in command:
             print(command) 
            
-
-
-
+            if 'add' in command and ('database' in command or 'databases' in command):
+                addDB = re.sub(r'\b(?:alexa|add|database)\b', '', command).strip()
+                adding_DB = addDB.replace("'","''")
+                if ' ' in adding_DB:
+                    print('phrase')
+                    command_sql = f"INSERT INTO phrases_english (phrase) VALUES ('{adding_DB}')"
+                    cursor.execute(command_sql)
+                    conn.commit()
+                    time.sleep(3)
+                    cursor.close()
+                    conn.close()
+                    print(adding_DB)
+                else:
+                    print('word')
+                    command_sql = f"INSERT INTO phrases_english (word) VALUES ('{adding_DB}')"
+                    cursor.execute(command_sql)
+                    conn.commit()
+                    time.sleep(3)
+                    cursor.close()
+                    conn.close()
+                    print(adding_DB)
+                    
+            else:
+                print("Don't have nothing to do for the command: > ", command)
 
 
 
@@ -78,7 +101,7 @@ try:
                         title = content_element.text
                         video_get_video.click()
                         print('video found')
-                        
+
                         time.sleep(15)
 
                         ad = driver.find_element(By.XPATH,'//*[@id="ad-text:1a"]') 
